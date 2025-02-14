@@ -28,11 +28,11 @@ echo "Checking if the model is already downloaded..."
 if [ ! -d "$MODEL_DIR" ]; then
     echo "Downloading DeepSeek 14b model..."
 
-    # Replace with the correct model download link
-    MODEL_URL="https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-14B/resolve/main"
+    # Correct model URL from Hugging Face
+    MODEL_URL="https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-14B/resolve/main/pytorch_model.bin"
     mkdir -p "$MODEL_DIR"
 
-    # Download the model using wget (example)
+    # Download the model using wget
     wget -P "$MODEL_DIR" "$MODEL_URL"
     if [ $? -eq 0 ]; then
         echo "Model downloaded successfully."
