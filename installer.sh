@@ -6,74 +6,58 @@ WEB_UI_DIR="$INSTALL_DIR/web_ui"
 CORE_DIR="$INSTALL_DIR/core"
 MODULES_DIR="$INSTALL_DIR/modules"
 VENV_DIR="$INSTALL_DIR/venv"
-MODEL_REPO="deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"  # Updated model repo from Hugging Face
-MODEL_DIR="$CORE_DIR/models/deepseek14b"
 
 # Ensure required directories exist
 mkdir -p "$WEB_UI_DIR/backend" "$WEB_UI_DIR/frontend" "$WEB_UI_DIR/admin"
 mkdir -p "$CORE_DIR" "$MODULES_DIR"
 
 # Update system and install dependencies
-echo "Updating system and installing dependencies..."
 sudo apt update
-sudo apt install -y python3 python3-venv python3-pip git wget
+sudo apt install -y python3 python3-venv python3-pip git
 
 # Set up virtual environment
 if [ ! -d "$VENV_DIR" ]; then
-    echo "Setting up virtual environment..."
     python3 -m venv "$VENV_DIR"
 fi
 source "$VENV_DIR/bin/activate"
 
-# Ensure the correct pip version for the virtual environment
-INSTALLED_PIP_VERSION=$(pip --version | awk '{print $2}')
-DESIRED_PIP_VERSION="25.0.1"  # Choose the latest version that won't break system dependencies
-if [ "$INSTALLED_PIP_VERSION" != "$DESIRED_PIP_VERSION" ]; then
-    echo "Upgrading pip in virtual environment..."
-    pip install --upgrade pip==$DESIRED_PIP_VERSION
-else
-    echo "pip is already at version $DESIRED_PIP_VERSION"
+# Upgrade pip only if it's a compatible version for Atulya AI
+CURRENT_PIP=$(pip --version | awk '{print $2}')
+if [[ "$CURRENT_PIP" != "25.0.1" ]]; then
+    echo "Upgrading pip to version 25.0.1 for Atulya AI..."
+    pip install --upgrade pip==25.0.1
 fi
-
-# Install huggingface_hub to download the model
-pip install huggingface_hub
 
 # Clone or update repository
 if [ ! -d "$INSTALL_DIR/.git" ]; then
-    echo "Cloning repository..."
     git clone https://github.com/atulyaai/AtulyaAI "$INSTALL_DIR"
 else
-    echo "Updating repository..."
     cd "$INSTALL_DIR"
     git reset --hard
     git pull origin main
 fi
 
-# Install Python dependencies from requirements.txt
-echo "Installing Python dependencies..."
+# Install Python dependencies
 pip install -r "$INSTALL_DIR/requirements.txt"
 
-# Ensure pip stays at desired version
-echo "Ensuring pip stays at version $DESIRED_PIP_VERSION..."
-pip install --upgrade pip==$DESIRED_PIP_VERSION
-
-# Ensure DeepSeek14B model is installed from Hugging Face
+# Ensure DeepSeek14B model is installed
+MODEL_DIR="$CORE_DIR/models/deepseek14b"
 if [ ! -d "$MODEL_DIR" ]; then
-    echo "Logging into Hugging Face CLI..."
-    huggingface-cli login  # This will prompt for your Hugging Face token
-
     echo "Downloading DeepSeek14B model from Hugging Face..."
     mkdir -p "$MODEL_DIR"
     cd "$MODEL_DIR"
-    huggingface-cli download "$MODEL_REPO" --cache-dir="$MODEL_DIR"
+    
+    # Ensure Hugging Face authentication token is available
+    if [ -z "$HF_TOKEN" ]; then
+        echo "Please set your Hugging Face token as HF_TOKEN environment variable."
+        exit 1
+    fi
+    
+    huggingface-cli login --token $HF_TOKEN
+    huggingface-cli download deepseek-ai/DeepSeek-R1-Distill-Qwen-14B --cache-dir "$MODEL_DIR"
 fi
 
 # Start Web UI setup
-if [ ! -d "$WEB_UI_DIR/backend" ]; then
-    echo "Creating backend directory..."
-    mkdir -p "$WEB_UI_DIR/backend"
-fi
-
 cd "$WEB_UI_DIR/backend"
 if [ ! -f "manage.py" ]; then
     echo "Initializing Django backend..."
