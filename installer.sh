@@ -1,75 +1,63 @@
 #!/bin/bash
+set -e  # Exit on error
 
-set -e  # Exit on any error
+INSTALL_DIR="/opt/atulyaai"
+VENV_DIR="$INSTALL_DIR/venv"
 
-LOG_FILE="/var/log/atulyaai_install.log"
-echo "Starting AtulyaAI Installation..." | tee -a $LOG_FILE
-
-# Check if running as root
-if [ "$(id -u)" -ne 0 ]; then
-    echo "Please run as root or use sudo." | tee -a $LOG_FILE
+# Ensure script runs as root
+if [[ $EUID -ne 0 ]]; then
+    echo "Please run as root or use sudo"
     exit 1
 fi
 
-# Update system packages
-echo "Updating system packages..." | tee -a $LOG_FILE
-apt update -y && apt upgrade -y | tee -a $LOG_FILE
+# Update package list
+echo "Updating package list..."
+apt update -y
 
-# Check & Install Dependencies
-deps=(git python3 python3-pip python3-venv)
-for dep in "${deps[@]}"; do
-    if ! dpkg -l | grep -q "${dep}"; then
-        echo "Installing $dep..." | tee -a $LOG_FILE
-        apt install -y "$dep" | tee -a $LOG_FILE
-    else
-        echo "$dep is already installed, skipping..." | tee -a $LOG_FILE
+# Install required dependencies if missing
+deps=(git python3 python3-venv python3-pip unzip)
+for pkg in "${deps[@]}"; do
+    if ! dpkg -s $pkg &> /dev/null; then
+        echo "Installing $pkg..."
+        apt install -y $pkg
     fi
 done
 
-# Clone or Update Repository
-INSTALL_DIR="/opt/atulyaai"
+# Clone or update the repository
 if [ -d "$INSTALL_DIR" ]; then
-    echo "Updating AtulyaAI repository..." | tee -a $LOG_FILE
-    cd $INSTALL_DIR
-    git reset --hard HEAD  # Reset local changes
-    git pull origin main --rebase | tee -a $LOG_FILE
+    echo "Updating existing AtulyaAI installation..."
+    cd "$INSTALL_DIR"
+    git reset --hard
+    git pull origin main
 else
-    echo "Cloning AtulyaAI repository..." | tee -a $LOG_FILE
-    git clone https://github.com/atulyaai/AtulyaAI.git "$INSTALL_DIR" | tee -a $LOG_FILE
+    echo "Cloning AtulyaAI repository..."
+    git clone https://github.com/atulyaai/AtulyaAI "$INSTALL_DIR"
 fi
-cd "$INSTALL_DIR"
 
-# Set permissions
-chmod +x installer.sh
-
-# Create virtual environment
-if [ ! -d "$INSTALL_DIR/venv" ]; then
-    echo "Setting up Python virtual environment..." | tee -a $LOG_FILE
-    python3 -m venv "$INSTALL_DIR/venv"
+# Set up Python virtual environment
+if [ ! -d "$VENV_DIR" ]; then
+    echo "Creating Python virtual environment..."
+    python3 -m venv "$VENV_DIR"
 fi
-source "$INSTALL_DIR/venv/bin/activate"
+
+source "$VENV_DIR/bin/activate"
 
 # Install Python dependencies
-pip install --upgrade pip | tee -a $LOG_FILE
-if [ -f "requirements.txt" ]; then
-    pip install -r requirements.txt | tee -a $LOG_FILE
-else
-    echo "No requirements.txt found, skipping..." | tee -a $LOG_FILE
-fi
+echo "Installing Python dependencies..."
+pip install --upgrade pip
+pip install -r "$INSTALL_DIR/requirements.txt"
 
-# Ensure AI model installation
-echo "Checking AI model installation..." | tee -a $LOG_FILE
-if [ ! -f "$INSTALL_DIR/models/deepseek-14b.bin" ]; then
-    echo "Downloading DeepSeek-14B model..." | tee -a $LOG_FILE
-    mkdir -p "$INSTALL_DIR/models"
-    wget -O "$INSTALL_DIR/models/deepseek-14b.bin" "https://example.com/deepseek-14b.bin" | tee -a $LOG_FILE
-else
-    echo "AI model already installed, skipping..." | tee -a $LOG_FILE
-fi
+# Ensure core and web UI are installed first
+mkdir -p "$INSTALL_DIR/core" "$INSTALL_DIR/web_ui"
 
-# Restart AtulyaAI Service
-echo "Restarting AtulyaAI service..." | tee -a $LOG_FILE
-systemctl restart atulyaai.service | tee -a $LOG_FILE
+# Set permissions
+echo "Setting permissions..."
+chown -R $(whoami):$(whoami) "$INSTALL_DIR"
+chmod -R 755 "$INSTALL_DIR"
 
-echo "Installation complete!" | tee -a $LOG_FILE
+# Enable and restart the service
+systemctl daemon-reload
+systemctl enable atulyaai.service
+systemctl restart atulyaai.service
 
+echo "AtulyaAI installation complete."
