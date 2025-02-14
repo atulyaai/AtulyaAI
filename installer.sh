@@ -1,72 +1,47 @@
 #!/bin/bash
-set -e  # Exit on error
 
-INSTALL_DIR="/opt/atulyaai"
-WEB_UI_DIR="$INSTALL_DIR/web_ui"
-CORE_DIR="$INSTALL_DIR/core"
-MODULES_DIR="$INSTALL_DIR/modules"
-VENV_DIR="$INSTALL_DIR/venv"
+echo "Starting Atulya AI setup..."
 
-# Ensure required directories exist
-echo "Creating necessary directories..."
-mkdir -p "$WEB_UI_DIR/backend" "$WEB_UI_DIR/frontend" "$WEB_UI_DIR/admin"
-mkdir -p "$CORE_DIR" "$MODULES_DIR"
-
-# Update system and install dependencies
-echo "Updating system packages..."
+# Update package lists
 sudo apt update
-sudo apt install -y python3 python3-venv python3-pip git
 
-# Set up virtual environment
-if [ ! -d "$VENV_DIR" ]; then
-    echo "Setting up virtual environment..."
-    python3 -m venv "$VENV_DIR"
-else
-    echo "Virtual environment already exists."
-fi
-source "$VENV_DIR/bin/activate"
+# Install necessary dependencies
+sudo apt install -y python3 python3-pip python3-venv curl ufw
 
-# Upgrade pip
+# Create a Python virtual environment
+echo "Creating virtual environment..."
+python3 -m venv /opt/atulyaai/venv
+source /opt/atulyaai/venv/bin/activate
+
+# Upgrade pip inside the virtual environment
 echo "Upgrading pip..."
 pip install --upgrade pip
 
-# Clone or update repository
-if [ ! -d "$INSTALL_DIR/.git" ]; then
-    echo "Cloning Atulya AI repository..."
-    git clone https://github.com/atulyaai/AtulyaAI "$INSTALL_DIR"
+# Install required Python packages from requirements.txt
+echo "Installing Python dependencies..."
+pip install -r /opt/atulyaai/requirements.txt
+
+# Apply database migrations for Django
+echo "Applying database migrations..."
+cd /opt/atulyaai/web_ui/backend
+python3 manage.py migrate
+
+# Allow traffic on port 8080 through the firewall (if UFW is enabled)
+echo "Configuring firewall to allow port 8080..."
+sudo ufw allow 8080/tcp
+
+# Starting Django server on 0.0.0.0:8080
+echo "Starting the Django development server..."
+nohup python3 manage.py runserver 0.0.0.0:8080 &
+
+# Check if Django server started successfully
+sleep 5
+if netstat -tuln | grep :8080; then
+  echo "Django server started successfully on port 8080."
 else
-    cd "$INSTALL_DIR"
-    echo "Pulling the latest changes from the repository..."
-    git reset --hard
-    git pull origin main
+  echo "Error: Django server failed to start."
 fi
 
-# Install Python dependencies
-echo "Installing dependencies from requirements.txt..."
-pip install -r "$INSTALL_DIR/requirements.txt"
-
-# Ensure DeepSeek14B model is installed
-MODEL_DIR="$CORE_DIR/models/deepseek14b"
-if [ ! -d "$MODEL_DIR" ]; then
-    echo "Downloading DeepSeek14B model from Hugging Face..."
-    mkdir -p "$MODEL_DIR"
-    cd "$MODEL_DIR"
-    # Replace with actual download command for Hugging Face model
-    huggingface-cli login --token your_huggingface_token
-    huggingface-cli download deepseek-ai/DeepSeek-R1-Distill-Qwen-14B
-else
-    echo "DeepSeek14B model already exists."
-fi
-
-# Start Web UI setup
-echo "Setting up the Django backend..."
-cd "$WEB_UI_DIR/backend"
-if [ ! -f "manage.py" ]; then
-    echo "Initializing Django project..."
-    django-admin startproject backend .
-else
-    echo "Django project already initialized."
-fi
-
-# Final cleanup and activation
-echo "Installation complete! Run 'source /opt/atulyaai/venv/bin/activate' to use Atulya AI."
+# Completion message
+echo "Atulya AI setup complete!"
+echo "You can access the AI server at http://<your-server-ip>:8080"
