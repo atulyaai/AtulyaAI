@@ -1,10 +1,11 @@
 #!/bin/bash
 
 # AtulyaAI One-Click Installer for Ubuntu 22.04 & 24.04
+# This script installs all necessary dependencies and sets up AtulyaAI.
 
 echo "🚀 Starting AtulyaAI Installation..."
 
-# Ensure script is run as root
+# Ensure the script is run as root
 if [[ $EUID -ne 0 ]]; then
    echo "❌ This script must be run as root. Use: sudo bash installer.sh"
    exit 1
@@ -18,26 +19,35 @@ apt update && apt upgrade -y
 echo "📦 Installing required dependencies..."
 apt install -y python3 python3-pip git curl wget unzip libpq-dev
 
-# Clone AtulyaAI Repository (Correct Repository)
-echo "📥 Downloading AtulyaAI source code..."
-git clone https://github.com/atulyaai/AtulyaAI.git /opt/atulyaai || { echo "❌ Git clone failed!"; exit 1; }
+# Define installation directory
+INSTALL_DIR="/opt/atulyaai"
 
-# Navigate to installation directory
-if [[ ! -d "/opt/atulyaai" ]]; then
-  echo "❌ Installation directory not found! Exiting..."
-  exit 1
+# Clone AtulyaAI Repository (Replace with your repo URL)
+if [ -d "$INSTALL_DIR" ]; then
+    echo "⚠️ Directory already exists. Pulling latest updates..."
+    cd "$INSTALL_DIR"
+    git reset --hard origin/main
+    git pull origin main
+else
+    echo "📥 Cloning AtulyaAI source code..."
+    git clone https://github.com/atulyaai/AtulyaAI.git "$INSTALL_DIR"
+    cd "$INSTALL_DIR"
 fi
-cd /opt/atulyaai
 
-# Download requirements.txt if missing
-if [[ ! -f "requirements.txt" ]]; then
-  echo "📥 Fetching requirements.txt from GitHub..."
-  wget -O requirements.txt https://raw.githubusercontent.com/atulyaai/AtulyaAI/main/requirements.txt || { echo "❌ Failed to download requirements.txt!"; exit 1; }
-fi
+# Ensure requirements.txt is downloaded
+echo "📄 Downloading latest requirements.txt..."
+wget -O requirements.txt https://raw.githubusercontent.com/atulyaai/AtulyaAI/main/requirements.txt
 
 # Install Python dependencies
 echo "🐍 Installing Python dependencies..."
-pip3 install -r requirements.txt || { echo "❌ Failed to install dependencies!"; exit 1; }
+pip3 install --upgrade pip
+pip3 install -r requirements.txt
+
+# Ensure main.py exists
+if [ ! -f "main.py" ]; then
+    echo "❌ main.py not found in $INSTALL_DIR. Please check the repository."
+    exit 1
+fi
 
 # Setup AtulyaAI Service
 echo "⚙️ Setting up AtulyaAI as a service..."
@@ -47,8 +57,8 @@ Description=AtulyaAI Service
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python3 /opt/atulyaai/main.py
-WorkingDirectory=/opt/atulyaai
+ExecStart=/usr/bin/python3 $INSTALL_DIR/main.py
+WorkingDirectory=$INSTALL_DIR
 Restart=always
 User=root
 
@@ -57,8 +67,10 @@ WantedBy=multi-user.target
 EOF
 
 # Enable & Start Service
+systemctl daemon-reload
 systemctl enable atulyaai
-systemctl start atulyaai
+systemctl restart atulyaai
 
+# Final Check
 echo "✅ AtulyaAI Installation Completed!"
 echo "🚀 Run the following command to check status: sudo systemctl status atulyaai"
