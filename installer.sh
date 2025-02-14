@@ -2,7 +2,7 @@
 
 # Set variables
 MODEL_DIR="/opt/atulyaai/models"
-DEEPSEEK_MODEL_URL="http://example.com/deepseek14b_model.zip"  # Replace with actual URL
+DEEPSEEK_MODEL_URL="https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"
 DEEPSEEK_MODEL_PATH="$MODEL_DIR/deepseek14b_model.zip"
 
 # Check if the required directories exist, if not, create them
