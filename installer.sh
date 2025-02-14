@@ -25,7 +25,7 @@ source "$VENV_DIR/bin/activate"
 CURRENT_PIP=$(pip --version | awk '{print $2}')
 if [[ "$CURRENT_PIP" != "25.0.1" ]]; then
     echo "Upgrading pip to version 25.0.1 for Atulya AI..."
-    pip install --upgrade pip==25.0.1
+    pip install --upgrade "pip==25.0.1"
 fi
 
 # Clone or update repository
@@ -37,8 +37,8 @@ else
     git pull origin main
 fi
 
-# Install Python dependencies
-pip install -r "$INSTALL_DIR/requirements.txt"
+# Install Python dependencies while preventing pip upgrade
+PIP_NO_PYTHON_VERSION_WARNING=1 pip install -r "$INSTALL_DIR/requirements.txt" --upgrade-strategy only-if-needed
 
 # Ensure DeepSeek14B model is installed
 MODEL_DIR="$CORE_DIR/models/deepseek14b"
