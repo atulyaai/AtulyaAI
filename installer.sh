@@ -25,9 +25,15 @@ if [ ! -d "$VENV_DIR" ]; then
 fi
 source "$VENV_DIR/bin/activate"
 
-# Upgrade pip immediately after virtual environment setup
-echo "Upgrading pip to version 25.0.1..."
-pip install --upgrade pip==25.0.1
+# Upgrade pip inside the virtual environment, if required
+INSTALLED_PIP_VERSION=$(pip --version | awk '{print $2}')
+DESIRED_PIP_VERSION="25.0.1"
+if [ "$INSTALLED_PIP_VERSION" != "$DESIRED_PIP_VERSION" ]; then
+    echo "Upgrading pip to version $DESIRED_PIP_VERSION..."
+    pip install --upgrade pip==$DESIRED_PIP_VERSION
+else
+    echo "pip is already at version $DESIRED_PIP_VERSION"
+fi
 
 # Install huggingface_hub to download the model
 pip install huggingface_hub
@@ -48,8 +54,8 @@ echo "Installing Python dependencies..."
 pip install -r "$INSTALL_DIR/requirements.txt"
 
 # Ensure pip does not downgrade after installing dependencies
-echo "Ensuring pip stays at version 25.0.1..."
-pip install --upgrade pip==25.0.1
+echo "Ensuring pip stays at version $DESIRED_PIP_VERSION..."
+pip install --upgrade pip==$DESIRED_PIP_VERSION
 
 # Ensure DeepSeek14B model is installed from Hugging Face
 if [ ! -d "$MODEL_DIR" ]; then
