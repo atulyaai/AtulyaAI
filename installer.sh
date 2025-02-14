@@ -49,12 +49,12 @@ pip install -r "$INSTALL_DIR/requirements.txt"
 
 # Ensure DeepSeek14B model is installed from Hugging Face
 if [ ! -d "$MODEL_DIR" ]; then
+    echo "Logging into Hugging Face CLI..."
+    huggingface-cli login  # This will prompt for your Hugging Face token
+
     echo "Downloading DeepSeek14B model from Hugging Face..."
     mkdir -p "$MODEL_DIR"
     cd "$MODEL_DIR"
-    # Log into Hugging Face and download the model
-    hf_token="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"  # Replace with your Hugging Face API token if required
-    huggingface-cli login "$hf_token"
     huggingface-cli download "$MODEL_REPO" --cache-dir="$MODEL_DIR"
 fi
 
