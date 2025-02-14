@@ -18,7 +18,6 @@ watchdog
 opencv-python
 moviepy
 pillow
-homeassistant
 schedule
 apscheduler
 psutil
