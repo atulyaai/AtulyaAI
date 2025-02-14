@@ -42,6 +42,10 @@ git pull origin main
 echo "Installing Python dependencies..."
 pip install -r "$INSTALL_DIR/requirements.txt"
 
+# Upgrade pip explicitly to version 25.0.1
+echo "Upgrading pip to version 25.0.1..."
+pip install --upgrade pip==25.0.1
+
 # Ensure DeepSeek14B model is still installed and updated from Hugging Face
 if [ ! -d "$MODEL_DIR" ]; then
     echo "Logging into Hugging Face CLI..."
