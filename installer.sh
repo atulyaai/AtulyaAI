@@ -21,18 +21,30 @@ apt install -y python3 python3-pip git curl wget unzip libpq-dev
 
 # Define installation directory
 INSTALL_DIR="/opt/atulyaai"
+REPO_URL="https://github.com/atulyaai/AtulyaAI.git"
 
-# Clone AtulyaAI Repository (Replace with your repo URL)
+# Check if AtulyaAI directory exists
 if [ -d "$INSTALL_DIR" ]; then
-    echo "⚠️ Directory already exists. Pulling latest updates..."
+    echo "⚠️ AtulyaAI directory already exists. Updating existing installation..."
     cd "$INSTALL_DIR"
-    git reset --hard origin/main
-    git pull origin main
+    
+    # Check if it's a valid Git repository
+    if [ -d ".git" ]; then
+        git reset --hard origin/main
+        git pull origin main
+    else
+        echo "❌ Existing directory is not a valid Git repository. Removing and re-cloning..."
+        cd /opt
+        rm -rf "$INSTALL_DIR"
+        git clone "$REPO_URL" "$INSTALL_DIR"
+    fi
 else
     echo "📥 Cloning AtulyaAI source code..."
-    git clone https://github.com/atulyaai/AtulyaAI.git "$INSTALL_DIR"
-    cd "$INSTALL_DIR"
+    git clone "$REPO_URL" "$INSTALL_DIR"
 fi
+
+# Navigate to installation directory
+cd "$INSTALL_DIR"
 
 # Ensure requirements.txt is downloaded
 echo "📄 Downloading latest requirements.txt..."
