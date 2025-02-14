@@ -1,78 +1,71 @@
 #!/bin/bash
 
-# Install necessary packages
-echo "Installing dependencies..."
-sudo apt update
-sudo apt install -y python3-pip python3-dev libpq-dev postgresql postgresql-contrib nginx curl
+# Set variables
+MODEL_DIR="/opt/atulyaai/models"
+DEEPSEEK_MODEL_URL="http://example.com/deepseek14b_model.zip"  # Replace with actual URL
+DEEPSEEK_MODEL_PATH="$MODEL_DIR/deepseek14b_model.zip"
 
-# Install virtual environment and activate it
-echo "Setting up virtual environment..."
-python3 -m venv venv
+# Check if the required directories exist, if not, create them
+echo "Checking if the necessary directories exist..."
+
+if [ ! -d "$MODEL_DIR" ]; then
+    echo "Creating model directory: $MODEL_DIR"
+    mkdir -p $MODEL_DIR
+fi
+
+# Download DeepSeek 14b model
+echo "Downloading DeepSeek 14b model..."
+wget -O $DEEPSEEK_MODEL_PATH $DEEPSEEK_MODEL_URL
+
+# Check if download was successful
+if [ $? -eq 0 ]; then
+    echo "Model downloaded successfully."
+else
+    echo "Failed to download the model. Please check the URL."
+    exit 1
+fi
+
+# Unzip the model
+echo "Unzipping the model..."
+unzip -o $DEEPSEEK_MODEL_PATH -d $MODEL_DIR
+
+# Check if unzipping was successful
+if [ $? -eq 0 ]; then
+    echo "Model unzipped successfully."
+else
+    echo "Failed to unzip the model. Please check the file."
+    exit 1
+fi
+
+# Set up a virtual environment
+echo "Setting up the virtual environment..."
+
+if [ ! -d "venv" ]; then
+    python3 -m venv venv
+    echo "Virtual environment created."
+else
+    echo "Virtual environment already exists."
+fi
+
+# Activate the virtual environment
 source venv/bin/activate
 
-# Install requirements
-echo "Installing requirements..."
-pip install -r /opt/atulyaai/web_ui/backend/requirements.txt
+# Install required Python packages
+echo "Installing Python dependencies..."
+pip install -r /opt/atulyaai/requirements.txt
 
-# Set up Django
-echo "Setting up Django project..."
-cd /opt/atulyaai/web_ui/backend
+# Check if installation was successful
+if [ $? -eq 0 ]; then
+    echo "Python dependencies installed successfully."
+else
+    echo "Failed to install Python dependencies."
+    exit 1
+fi
 
-# Apply Django migrations (if you have any)
-echo "Applying migrations..."
-python manage.py migrate
+# Start the application (replace with your actual start command)
+echo "Starting the application..."
+# Add the command to start your application here, e.g.
+# python3 /opt/atulyaai/web_ui/backend/app.py
 
-# Create a superuser (optional but recommended)
-echo "Creating superuser..."
-python manage.py createsuperuser  # Follow the prompts to create a user
-
-# Update systemd service to run Django app on boot
-echo "Setting up system service..."
-
-# Create a systemd service file for Django
-sudo tee /etc/systemd/system/atulyaai_django.service > /dev/null <<EOF
-[Unit]
-Description=Atulya AI Django Server
-After=network.target
-
-[Service]
-User=www-data
-Group=www-data
-WorkingDirectory=/opt/atulyaai/web_ui/backend
-ExecStart=/opt/atulyaai/web_ui/backend/venv/bin/python3 /opt/atulyaai/web_ui/backend/manage.py runserver 0.0.0.0:8000
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# Enable and start the service
-sudo systemctl daemon-reload
-sudo systemctl enable atulyaai_django
-sudo systemctl start atulyaai_django
-
-# Set up Nginx to reverse proxy to the Django app (optional but recommended)
-echo "Setting up Nginx reverse proxy..."
-
-# Create Nginx configuration for the project
-sudo tee /etc/nginx/sites-available/atulyaai > /dev/null <<EOF
-server {
-    listen 80;
-    server_name _;
-
-    location / {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-    }
-}
-EOF
-
-# Enable the site and restart Nginx
-sudo ln -s /etc/nginx/sites-available/atulyaai /etc/nginx/sites-enabled
-sudo systemctl restart nginx
-
-# Finish installation
-echo "Django setup complete and service is running!"
+# Success message
+echo "Atulya AI installation completed successfully!"
