@@ -1,74 +1,58 @@
 #!/bin/bash
-
-set -e  # Exit immediately if a command exits with a non-zero status
-LOGFILE="/var/log/atulyaai_installer.log"
-exec > >(tee -a "$LOGFILE") 2>&1  # Log output
+set -e  # Exit on error
 
 INSTALL_DIR="/opt/atulyaai"
-GIT_REPO="https://github.com/atulyaai/AtulyaAI.git"
-MODEL_DIR="$INSTALL_DIR/core/models"
-MODEL_URL="https://huggingface.co/deepseek-ai/deepseek-llm-14b-chat"
+WEB_UI_DIR="$INSTALL_DIR/web_ui"
+CORE_DIR="$INSTALL_DIR/core"
+MODULES_DIR="$INSTALL_DIR/modules"
+VENV_DIR="$INSTALL_DIR/venv"
 
-# Function to check if a package is installed
-is_installed() {
-    dpkg -l | grep -q "$1"
-}
+# Ensure required directories exist
+mkdir -p "$WEB_UI_DIR/backend" "$WEB_UI_DIR/frontend" "$WEB_UI_DIR/admin"
+mkdir -p "$CORE_DIR" "$MODULES_DIR"
 
-# Ensure script is run as root
-if [[ $EUID -ne 0 ]]; then
-    echo "Please run as root"
-    exit 1
+# Update system and install dependencies
+sudo apt update
+sudo apt install -y python3 python3-venv python3-pip git
+
+# Set up virtual environment
+if [ ! -d "$VENV_DIR" ]; then
+    python3 -m venv "$VENV_DIR"
 fi
+source "$VENV_DIR/bin/activate"
 
-# Install required system packages if missing
-REQUIRED_PKGS=(git python3 python3-venv python3-pip nginx)
-for pkg in "${REQUIRED_PKGS[@]}"; do
-    if ! is_installed "$pkg"; then
-        echo "Installing $pkg..."
-        apt update && apt install -y "$pkg"
-    else
-        echo "$pkg is already installed. Skipping."
-    fi
-done
+# Upgrade pip
+pip install --upgrade pip
 
 # Clone or update repository
-if [ -d "$INSTALL_DIR" ]; then
-    echo "Updating Atulya AI..."
-    cd "$INSTALL_DIR"
-    git reset --hard  # Prevent conflicts
-    git pull origin main || { echo "Git pull failed"; exit 1; }
+if [ ! -d "$INSTALL_DIR/.git" ]; then
+    git clone https://github.com/atulyaai/AtulyaAI "$INSTALL_DIR"
 else
-    echo "Cloning Atulya AI..."
-    git clone "$GIT_REPO" "$INSTALL_DIR"
+    cd "$INSTALL_DIR"
+    git reset --hard
+    git pull origin main
 fi
-
-# Create virtual environment
-if [ ! -d "$INSTALL_DIR/venv" ]; then
-    echo "Setting up virtual environment..."
-    python3 -m venv "$INSTALL_DIR/venv"
-fi
-source "$INSTALL_DIR/venv/bin/activate"
 
 # Install Python dependencies
-pip install --upgrade pip
 pip install -r "$INSTALL_DIR/requirements.txt"
 
-# Ensure Core & Web UI are installed first
-cd "$INSTALL_DIR/web_ui/backend"
-uvicorn main:app --host 0.0.0.0 --port 8000 &
-cd "$INSTALL_DIR/web_ui/frontend"
-npm install && npm run build
-
-# Install DeepSeek 14B model if missing
-if [ ! -d "$MODEL_DIR/deepseek-14b" ]; then
-    echo "Downloading DeepSeek 14B model..."
+# Ensure DeepSeek14B model is installed
+MODEL_DIR="$CORE_DIR/models/deepseek14b"
+if [ ! -d "$MODEL_DIR" ]; then
+    echo "Downloading DeepSeek14B model..."
     mkdir -p "$MODEL_DIR"
-    git clone "$MODEL_URL" "$MODEL_DIR/deepseek-14b"
-else
-    echo "DeepSeek 14B model already installed. Skipping."
+    cd "$MODEL_DIR"
+    wget -O model.tar.gz "https://example.com/deepseek14b.tar.gz"  # Replace with actual link
+    tar -xzf model.tar.gz && rm model.tar.gz
 fi
 
-# Start services
-systemctl restart nginx
+# Start Web UI setup
+cd "$WEB_UI_DIR/backend"
+if [ ! -f "manage.py" ]; then
+    echo "Initializing Django backend..."
+    django-admin startproject backend .
+fi
 
-echo "✅ Atulya AI installed successfully!"
+# Final cleanup
+cd "$INSTALL_DIR"
+echo "Installation complete! Run 'source $VENV_DIR/bin/activate' to use Atulya AI."
