@@ -47,6 +47,11 @@ if [ ! -d "$MODEL_DIR" ]; then
 fi
 
 # Start Web UI setup
+if [ ! -d "$WEB_UI_DIR/backend" ]; then
+    echo "Creating backend directory..."
+    mkdir -p "$WEB_UI_DIR/backend"
+fi
+
 cd "$WEB_UI_DIR/backend"
 if [ ! -f "manage.py" ]; then
     echo "Initializing Django backend..."
