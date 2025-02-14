@@ -25,19 +25,14 @@ if [ ! -d "$VENV_DIR" ]; then
 fi
 source "$VENV_DIR/bin/activate"
 
-# Check if homeassistant is installed, and if so, avoid upgrading pip globally
-if ! pip freeze | grep -q "homeassistant"; then
-    # Only upgrade pip in the virtual environment if Home Assistant is not installed
-    INSTALLED_PIP_VERSION=$(pip --version | awk '{print $2}')
-    DESIRED_PIP_VERSION="25.0.1"
-    if [ "$INSTALLED_PIP_VERSION" != "$DESIRED_PIP_VERSION" ]; then
-        echo "Upgrading pip to version $DESIRED_PIP_VERSION..."
-        pip install --upgrade pip==$DESIRED_PIP_VERSION
-    else
-        echo "pip is already at version $DESIRED_PIP_VERSION"
-    fi
+# Ensure the correct pip version for the virtual environment
+INSTALLED_PIP_VERSION=$(pip --version | awk '{print $2}')
+DESIRED_PIP_VERSION="25.0.1"  # Choose the latest version that won't break system dependencies
+if [ "$INSTALLED_PIP_VERSION" != "$DESIRED_PIP_VERSION" ]; then
+    echo "Upgrading pip in virtual environment..."
+    pip install --upgrade pip==$DESIRED_PIP_VERSION
 else
-    echo "Home Assistant is installed. Skipping pip upgrade to avoid conflicts."
+    echo "pip is already at version $DESIRED_PIP_VERSION"
 fi
 
 # Install huggingface_hub to download the model
@@ -54,15 +49,37 @@ else
     git pull origin main
 fi
 
-# Install Python dependencies
+# Install Python dependencies from requirements.txt
 echo "Installing Python dependencies..."
 pip install -r "$INSTALL_DIR/requirements.txt"
 
-# Ensure pip does not downgrade after installing dependencies
+# Ensure pip stays at desired version
 echo "Ensuring pip stays at version $DESIRED_PIP_VERSION..."
 pip install --upgrade pip==$DESIRED_PIP_VERSION
 
 # Ensure DeepSeek14B model is installed from Hugging Face
 if [ ! -d "$MODEL_DIR" ]; then
     echo "Logging into Hugging Face CLI..."
-    huggingfa
+    huggingface-cli login  # This will prompt for your Hugging Face token
+
+    echo "Downloading DeepSeek14B model from Hugging Face..."
+    mkdir -p "$MODEL_DIR"
+    cd "$MODEL_DIR"
+    huggingface-cli download "$MODEL_REPO" --cache-dir="$MODEL_DIR"
+fi
+
+# Start Web UI setup
+if [ ! -d "$WEB_UI_DIR/backend" ]; then
+    echo "Creating backend directory..."
+    mkdir -p "$WEB_UI_DIR/backend"
+fi
+
+cd "$WEB_UI_DIR/backend"
+if [ ! -f "manage.py" ]; then
+    echo "Initializing Django backend..."
+    django-admin startproject backend .
+fi
+
+# Final cleanup
+cd "$INSTALL_DIR"
+echo "Installation complete! Run 'source $VENV_DIR/bin/activate' to use Atulya AI."
