@@ -53,7 +53,7 @@ if [ ! -d "$MODEL_DIR" ]; then
     mkdir -p "$MODEL_DIR"
     cd "$MODEL_DIR"
     # Log into Hugging Face and download the model
-    hf_token="your_huggingface_token"  # Replace with your Hugging Face API token if required
+    hf_token="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"  # Replace with your Hugging Face API token if required
     huggingface-cli login "$hf_token"
     huggingface-cli download "$MODEL_REPO" --cache-dir="$MODEL_DIR"
 fi
