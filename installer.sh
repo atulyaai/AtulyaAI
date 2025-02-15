@@ -1,47 +1,53 @@
 #!/bin/bash
 
-# Set your Hugging Face API token (replace with your token)
-HUGGINGFACE_TOKEN="your_hugging_face_token_here"  # Replace with your actual Hugging Face token
+# Update the system and install dependencies
+echo "Updating system and installing dependencies..."
+sudo apt update -y
+sudo apt upgrade -y
+sudo apt install -y python3 python3-pip curl git wget build-essential
 
-# Define model names for DeepSeek models
-MODEL_14B_NAME="deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"  # Qwen 14B model
-MODEL_70B_NAME="deepseek-ai/DeepSeek-R1-Distill-Llama-70B"  # Llama 70B model
+# Install Hugging Face libraries
+echo "Installing Hugging Face dependencies..."
+pip3 install huggingface_hub transformers
 
-# Install Hugging Face libraries (if not installed)
-echo "Installing Hugging Face libraries..."
-pip install huggingface_hub transformers
+# Check if Python and pip are installed
+if ! command -v python3 &> /dev/null
+then
+    echo "Python3 not found, installing..."
+    sudo apt install -y python3
+fi
 
-# Function to download models from Hugging Face
+if ! command -v pip3 &> /dev/null
+then
+    echo "pip3 not found, installing..."
+    sudo apt install -y python3-pip
+fi
+
+# Set Hugging Face Token (ensure to replace with your actual Hugging Face Token)
+HUGGINGFACE_TOKEN="your-huggingface-token"
+
+# Function to download models
 download_model() {
-    MODEL_NAME=$1
-    OUTPUT_DIR=$2
-
-    echo "Downloading model: $MODEL_NAME..."
-
-    # Use huggingface_hub library to download the model with the API token
-    python3 -c "
-import os
-from huggingface_hub import hf_hub_download
-
-# Set Hugging Face token for authentication
-os.environ['HF_HOME'] = '$HUGGINGFACE_TOKEN'
-
-# Download model
-hf_hub_download(repo_id='$MODEL_NAME', cache_dir='$OUTPUT_DIR', use_auth_token=True)
-" 
-
-    if [ $? -eq 0 ]; then
-        echo "Model $MODEL_NAME downloaded successfully!"
-    else
-        echo "Failed to download model $MODEL_NAME."
-        exit 1
-    fi
+    local model_url=$1
+    local model_name=$2
+    echo "Downloading model from $model_url..."
+    mkdir -p models
+    # Download model using Hugging Face hub
+    python3 -m huggingface_hub download $model_url --token $HUGGINGFACE_TOKEN --cache-dir ./models
+    # Move the downloaded model to the proper location if necessary
+    mv ./models/$model_name/* ./models/
 }
 
-# Download DeepSeek-Qwen-14B model
-download_model $MODEL_14B_NAME "./models"
+# Model URLs and names (replace with your actual model URLs and names)
+MODEL_14B_URL="deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"
+MODEL_70B_URL="deepseek-ai/DeepSeek-R1-Distill-Llama-70B"
+MODEL_14B_NAME="DeepSeek-R1-Distill-Qwen-14B"
+MODEL_70B_NAME="DeepSeek-R1-Distill-Llama-70B"
 
-# Download DeepSeek-Llama-70B model
-download_model $MODEL_70B_NAME "./models"
+# Download models
+download_model $MODEL_14B_URL $MODEL_14B_NAME
+download_model $MODEL_70B_URL $MODEL_70B_NAME
 
-echo "Model download complete!"
+# Done
+echo "Model download complete."
+echo "AtulyaAI installation complete! You can now use your AI system."
