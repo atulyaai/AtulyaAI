@@ -32,10 +32,11 @@ download_model() {
     local model_name=$2
     echo "Downloading model from $model_url..."
     mkdir -p models
-    # Download model using Hugging Face hub
-    python3 -m huggingface_hub download $model_url --token $HUGGINGFACE_TOKEN --cache-dir ./models
-    # Move the downloaded model to the proper location if necessary
-    mv ./models/$model_name/* ./models/
+    # Download model using Hugging Face hub with the correct method
+    python3 -c "
+from huggingface_hub import hf_hub_download
+hf_hub_download(repo_id='$model_url', token='$HUGGINGFACE_TOKEN', cache_dir='./models')
+" 
 }
 
 # Model URLs and names (replace with your actual model URLs and names)
