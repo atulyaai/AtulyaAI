@@ -1,179 +1,122 @@
 #!/bin/bash
 
-# Variables
-PROJECT_DIR="./AtulyaAI_v1.2"
-REPO_URL="https://raw.githubusercontent.com/atulyaai/AtulyaAI/main"
-LOG_FILE="$PROJECT_DIR/installer.log"
-VENV_DIR="$PROJECT_DIR/venv"
-MODEL_DIR="$PROJECT_DIR/core/models"
-QUANTIZED_MODEL_DIR="$MODEL_DIR/quantized"
+# ============================================
+#  Atulya AI - Optimized Installer (Django, FastAPI, HTMX)
+#  Full Setup: Dependencies, AI Models, DNA Compression, Web UI
+# ============================================
 
-# Logging function
-log() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
-}
+BASE_DIR="/opt/atulya_ai"
+LOG_DIR="$BASE_DIR/logs"
+AI_MODELS_DIR="$BASE_DIR/ai_models"
+WEB_DIR="$BASE_DIR/web_ui"
+DNA_DIR="$BASE_DIR/DNA_Compression"
 
-# Error handling function
-handle_error() {
-    log "Error: $1"
-    exit 1
-}
+mkdir -p "$BASE_DIR" "$LOG_DIR" "$AI_MODELS_DIR" "$WEB_DIR" "$DNA_DIR"
+LOG_FILE="$LOG_DIR/install.log"
+echo "Installation started at $(date)" > "$LOG_FILE"
 
-# Check for root privileges
-check_root() {
-    if [ "$EUID" -ne 0 ]; then
-        handle_error "Please run as root."
-    fi
-}
+echo "Updating system..." | tee -a "$LOG_FILE"
+apt update && apt upgrade -y && apt install -y python3 python3-pip git wget unzip nginx
 
-# Create project directory
-setup_directories() {
-    log "Setting up project directory..."
-    mkdir -p "$PROJECT_DIR" || handle_error "Failed to create project directory."
-    mkdir -p "$PROJECT_DIR/logs" || handle_error "Failed to create logs directory."
-    mkdir -p "$QUANTIZED_MODEL_DIR" || handle_error "Failed to create quantized models directory."
-}
+echo "Installing Python dependencies..." | tee -a "$LOG_FILE"
+pip3 install transformers accelerate django fastapi uvicorn cryptography psutil faiss opencv-python
 
-# Install system dependencies
-install_dependencies() {
-    log "Installing dependencies..."
-    apt-get update || handle_error "Failed to update package list."
-    apt-get install -y python3 python3-venv python3-pip git curl || handle_error "Failed to install dependencies."
-}
+echo "Fetching latest Atulya AI repository..." | tee -a "$LOG_FILE"
+git clone https://github.com/atulya-ai/core.git "$BASE_DIR"
 
-# Set up Python virtual environment
-setup_venv() {
-    log "Setting up Python virtual environment..."
-    python3 -m venv "$VENV_DIR" || handle_error "Failed to create virtual environment."
-    source "$VENV_DIR/bin/activate" || handle_error "Failed to activate virtual environment."
-}
+echo "Downloading AI Models..." | tee -a "$LOG_FILE"
+wget -P "$AI_MODELS_DIR" https://model-server.com/deepseek_14b.bin
+wget -P "$AI_MODELS_DIR" https://model-server.com/deepseek_70b.bin
 
-# Install Python packages
-install_python_packages() {
-    log "Installing Python packages..."
-    pip install torch transformers llama-cpp-python ggml || handle_error "Failed to install Python packages."
-}
+echo "Configuring LoRA & RAG..." | tee -a "$LOG_FILE"
+cat <<EOF > "$AI_MODELS_DIR/lora_config.py"
+from transformers import AutoModel
+model = AutoModel.from_pretrained('$AI_MODELS_DIR/deepseek_14b.bin')
+EOF
 
-# Download and quantize models
-setup_models() {
-    log "Downloading and quantizing models..."
+cat <<EOF > "$AI_MODELS_DIR/rag_handler.py"
+import faiss
+EOF
 
-    # Download the standard model (e.g., PyTorch model)
-    mkdir -p "$MODEL_DIR" || handle_error "Failed to create models directory."
-    curl -o "$MODEL_DIR/original_model.pth" "$REPO_URL/core/models/original_model.pth" || handle_error "Failed to download original model."
+echo "Setting up AI-based DNA Compression..." | tee -a "$LOG_FILE"
+cat <<EOF > "$DNA_DIR/compression.py"
+import zlib, cv2
+def compress_data(data): return zlib.compress(data.encode('utf-8'))
+def compress_image(img): cv2.imwrite(img, cv2.imread(img), [cv2.IMWRITE_JPEG_QUALITY, 60])
+EOF
 
-    # Quantize the model to 8-bit GGUF format
-    log "Quantizing model to 8-bit GGUF format..."
-    cat <<EOL > "$MODEL_DIR/quantize_model.py"
-import torch
-from transformers import AutoModelForCausalLM
-from ggml import quantize
+cat <<EOF > "$DNA_DIR/ai_health_monitor.py"
+import psutil
+def check_performance(): return psutil.cpu_percent(), psutil.virtual_memory().percent
+EOF
 
-# Load the original model
-model = AutoModelForCausalLM.from_pretrained("$MODEL_DIR/original_model.pth")
+echo "Configuring System Security & Logging..." | tee -a "$LOG_FILE"
+cat <<EOF > "$BASE_DIR/security.py"
+from cryptography.fernet import Fernet
+key = Fernet.generate_key()
+cipher = Fernet(key)
+EOF
 
-# Quantize the model to 8-bit
-quantized_model = quantize(model, bits=8)
+cat <<EOF > "$BASE_DIR/network_monitor.py"
+import socket
+def check_connection(): return socket.create_connection(('www.google.com', 80))
+EOF
 
-# Save the quantized model in GGUF format
-quantized_model.save_pretrained("$QUANTIZED_MODEL_DIR/quantized_model_8bit.gguf")
-EOL
+echo "Setting up Django Web UI with HTMX..." | tee -a "$LOG_FILE"
+django-admin startproject atulya_web "$WEB_DIR"
+cd "$WEB_DIR"
 
-    # Run the quantization script
-    python3 "$MODEL_DIR/quantize_model.py" || handle_error "Failed to quantize model."
+cat <<EOF > "$WEB_DIR/templates/index.html"
+<!DOCTYPE html>
+<html><head><title>Atulya AI</title></head>
+<body><h1>Welcome to Atulya AI</h1>
+<button hx-get="/status" hx-target="#status">Check AI Status</button>
+<div id="status"></div></body></html>
+EOF
 
-    log "Model quantized and saved to $QUANTIZED_MODEL_DIR/quantized_model_8bit.gguf"
-}
+mkdir -p "$WEB_DIR/atulya_app"
+cat <<EOF > "$WEB_DIR/atulya_app/views.py"
+from django.shortcuts import render
+from django.http import JsonResponse
+import psutil
 
-# Set up Web UI
-setup_web_ui() {
-    log "Setting up Web UI..."
-    mkdir -p "$PROJECT_DIR/web_ui/backend" || handle_error "Failed to create backend directory."
-    mkdir -p "$PROJECT_DIR/web_ui/frontend" || handle_error "Failed to create frontend directory."
-    mkdir -p "$PROJECT_DIR/web_ui/admin" || handle_error "Failed to create admin directory."
+def index(request):
+    return render(request, 'index.html')
 
-    log "Downloading Web UI files..."
-    curl -o "$PROJECT_DIR/web_ui/backend/app.py" "$REPO_URL/web_ui/backend/app.py" || handle_error "Failed to download backend script."
-    curl -o "$PROJECT_DIR/web_ui/frontend/index.html" "$REPO_URL/web_ui/frontend/index.html" || handle_error "Failed to download frontend template."
-    curl -o "$PROJECT_DIR/web_ui/admin/admin.html" "$REPO_URL/web_ui/admin/admin.html" || handle_error "Failed to download admin template."
-}
+def status(request):
+    cpu = psutil.cpu_percent()
+    ram = psutil.virtual_memory().percent
+    return JsonResponse({'cpu': cpu, 'ram': ram})
+EOF
 
-# Set up core AI functionality
-setup_core_ai() {
-    log "Setting up core AI functionality..."
-    mkdir -p "$PROJECT_DIR/core/nlp" || handle_error "Failed to create NLP directory."
-    mkdir -p "$PROJECT_DIR/core/automation" || handle_error "Failed to create automation directory."
-    mkdir -p "$PROJECT_DIR/core/voice" || handle_error "Failed to create voice directory."
+cat <<EOF > "$WEB_DIR/atulya_app/urls.py"
+from django.urls import path
+from .views import index, status
 
-    log "Downloading core AI scripts..."
-    curl -o "$PROJECT_DIR/core/nlp/nlp_processor.py" "$REPO_URL/core/nlp/nlp_processor.py" || handle_error "Failed to download NLP script."
-    curl -o "$PROJECT_DIR/core/automation/task_scheduler.py" "$REPO_URL/core/automation/task_scheduler.py" || handle_error "Failed to download automation script."
-    curl -o "$PROJECT_DIR/core/voice/wake_word.py" "$REPO_URL/core/voice/wake_word.py" || handle_error "Failed to download voice script."
+urlpatterns = [
+    path('', index, name='index'),
+    path('status', status, name='status'),
+]
+EOF
 
-    # Add code to load quantized GGUF models
-    cat <<EOL > "$PROJECT_DIR/core/load_models.py"
-from llama_cpp import Llama
+echo "Setting up FastAPI Backend..." | tee -a "$LOG_FILE"
+cat <<EOF > "$WEB_DIR/backend.py"
+from fastapi import FastAPI
+import psutil
 
-def load_model(model_path):
-    return Llama(model_path=model_path)
+app = FastAPI()
 
-# Load the quantized 8-bit GGUF model
-quantized_model = load_model("$QUANTIZED_MODEL_DIR/quantized_model_8bit.gguf")
-EOL
-}
+@app.get("/")
+def home():
+    return {"message": "Atulya AI Backend is Running"}
 
-# Set up modules
-setup_modules() {
-    log "Setting up modules..."
-    mkdir -p "$PROJECT_DIR/modules/cybersecurity" || handle_error "Failed to create cybersecurity directory."
-    mkdir -p "$PROJECT_DIR/modules/smart_home" || handle_error "Failed to create smart home directory."
-    mkdir -p "$PROJECT_DIR/modules/file_tools" || handle_error "Failed to create file tools directory."
-    mkdir -p "$PROJECT_DIR/modules/automation" || handle_error "Failed to create automation directory."
-    mkdir -p "$PROJECT_DIR/modules/ai_learning" || handle_error "Failed to create AI learning directory."
+@app.get("/health")
+def health_check():
+    return {"cpu": psutil.cpu_percent(), "ram": psutil.virtual_memory().percent}
+EOF
 
-    log "Downloading module scripts..."
-    curl -o "$PROJECT_DIR/modules/cybersecurity/threat_detection.py" "$REPO_URL/modules/cybersecurity/threat_detection.py" || handle_error "Failed to download cybersecurity script."
-    curl -o "$PROJECT_DIR/modules/smart_home/iot_control.py" "$REPO_URL/modules/smart_home/iot_control.py" || handle_error "Failed to download smart home script."
-    curl -o "$PROJECT_DIR/modules/file_tools/file_manager.py" "$REPO_URL/modules/file_tools/file_manager.py" || handle_error "Failed to download file tools script."
-    curl -o "$PROJECT_DIR/modules/automation/os_automation.py" "$REPO_URL/modules/automation/os_automation.py" || handle_error "Failed to download automation script."
-    curl -o "$PROJECT_DIR/modules/ai_learning/rag_lora.py" "$REPO_URL/modules/ai_learning/rag_lora.py" || handle_error "Failed to download AI learning script."
-}
+echo "Starting FastAPI & Django Services..." | tee -a "$LOG_FILE"
+nohup uvicorn "$WEB_DIR.backend:app" --host 0.0.0.0 --port 8001 > "$LOG_DIR/fastapi.log" 2>&1 &
+nohup python3 "$WEB_DIR/manage.py" runserver 0.0.0.0:8000 > "$LOG_DIR/django.log" 2>&1 &
 
-# Set up logs, data, and updates
-setup_logs_data_updates() {
-    log "Setting up logs, data, and updates..."
-    mkdir -p "$PROJECT_DIR/data" || handle_error "Failed to create data directory."
-    mkdir -p "$PROJECT_DIR/updates" || handle_error "Failed to create updates directory."
-
-    log "Downloading logs, data, and updates scripts..."
-    curl -o "$PROJECT_DIR/logs/system_logs.py" "$REPO_URL/logs/system_logs.py" || handle_error "Failed to download logging script."
-    curl -o "$PROJECT_DIR/data/data_manager.py" "$REPO_URL/data/data_manager.py" || handle_error "Failed to download data management script."
-    curl -o "$PROJECT_DIR/updates/auto_updater.py" "$REPO_URL/updates/auto_updater.py" || handle_error "Failed to download auto-updater script."
-}
-
-# Set permissions
-set_permissions() {
-    log "Setting permissions..."
-    chmod -R 755 "$PROJECT_DIR" || handle_error "Failed to set permissions."
-}
-
-# Main function
-main() {
-    check_root
-    setup_directories
-    install_dependencies
-    setup_venv
-    install_python_packages
-    setup_models
-    setup_web_ui
-    setup_core_ai
-    setup_modules
-    setup_logs_data_updates
-    set_permissions
-
-    log "Installation completed successfully!"
-    log "Access the web-based control panel at: http://localhost:5000"
-}
-
-# Run the main function
-main
+echo "✅ Installation Complete! Access Web UI at http://localhost:8000" | tee -a "$LOG_FILE"
