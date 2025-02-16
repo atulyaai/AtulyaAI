@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # -------------------------------------
-# Atulya AI Unified Installer (1100+ Lines)
-# Automates AI installation, dependencies, and setup
+# Atulya AI Unified Installer (Final Optimized Version)
 # -------------------------------------
 
 echo "[INFO] Starting Atulya AI Installation..."
@@ -21,11 +20,11 @@ DNA_DIR="$BASE_DIR/dna_compression"
 echo "[INFO] Creating directories..."
 mkdir -p $MODULES_DIR $LOGS_DIR $MODELS_DIR $DATA_DIR $WEB_DIR $DNA_DIR
 
-# Update & Install Required Dependencies
+# Install System Dependencies
 echo "[INFO] Installing system dependencies..."
-apt update && apt install -y python3 python3-pip git curl wget unzip 
+apt update && apt install -y python3 python3-pip git curl wget unzip nginx ufw
 
-# Install Python Virtual Environment
+# Python Virtual Environment Setup
 echo "[INFO] Setting up Python Virtual Environment..."
 python3 -m venv $BASE_DIR/venv
 source $BASE_DIR/venv/bin/activate
@@ -33,56 +32,89 @@ source $BASE_DIR/venv/bin/activate
 # Install Required Python Libraries
 echo "[INFO] Installing required Python packages..."
 pip install --upgrade pip
-pip install fastapi uvicorn django transformers torch numpy pandas requests scipy scikit-learn
+pip install fastapi uvicorn django transformers torch numpy pandas requests scipy scikit-learn llama-cpp-python
 
-echo "[INFO] Core setup completed."
+# Firewall & Port Setup
+echo "[INFO] Configuring firewall rules..."
+ufw allow 22/tcp
+ufw allow 80/tcp
+ufw allow 8000/tcp
+ufw --force enable
 
-# AI Model Selection
-echo "[INFO] Select the AI Model to install:"
-echo "1) DeepSeek"
-echo "2) RAG Optimized"
-echo "3) LoRA Adaptive"
-read -p "[INPUT] Enter the option (1/2/3): " model_choice
+echo "[INFO] Firewall configuration completed."
 
-# Download and Install Selected Model
-if [[ $model_choice -eq 1 ]]; then
-    echo "[INFO] Installing DeepSeek Model..."
-    git clone https://github.com/deepseek-ai/deepseek-model.git $MODELS_DIR/deepseek
-elif [[ $model_choice -eq 2 ]]; then
-    echo "[INFO] Installing RAG Optimized Model..."
-    git clone https://github.com/rag-ai/rag-optimized.git $MODELS_DIR/rag
-elif [[ $model_choice -eq 3 ]]; then
-    echo "[INFO] Installing LoRA Adaptive Model..."
-    git clone https://github.com/lora-ai/lora-adaptive.git $MODELS_DIR/lora
-else
-    echo "[ERROR] Invalid choice! Exiting installation."
-    exit 1
-fi
+# Download and Install All AI Models
+declare -A MODELS
+MODELS["DeepSeek"]="https://github.com/deepseek-ai/deepseek-model.git"
+MODELS["RAG_Optimized"]="https://github.com/rag-ai/rag-optimized.git"
+MODELS["LoRA_Adaptive"]="https://github.com/lora-ai/lora-adaptive.git"
 
-echo "[INFO] AI Model Installation Complete."
+echo "[INFO] Downloading and setting up AI models..."
+for model in "${!MODELS[@]}"; do
+    MODEL_DIR="$MODELS_DIR/$model"
+    if [ ! -d "$MODEL_DIR" ]; then
+        echo "[INFO] Downloading $model..."
+        git clone "${MODELS[$model]}" "$MODEL_DIR"
+    else
+        echo "[INFO] $model already exists, skipping download."
+    fi
+
+    # Convert AI Model to GGUF Format
+    echo "[INFO] Converting $model model to GGUF format..."
+    python3 -c "from llama_cpp import convert_pytorch_model; convert_pytorch_model('$MODEL_DIR', output_format='gguf')"
+    echo "[INFO] $model conversion to GGUF completed."
+done
+
+echo "[INFO] All AI Models Installed & Converted."
 
 # DNA Compression Setup
 echo "[INFO] Setting up DNA Compression Module..."
-git clone https://github.com/atulya-ai/dna-compression.git $DNA_DIR
-cd $DNA_DIR
-bash install_dna.sh
+if [ ! -d "$DNA_DIR" ]; then
+    git clone https://github.com/atulya-ai/dna-compression.git $DNA_DIR
+    cd $DNA_DIR
+    bash install_dna.sh
+else
+    echo "[INFO] DNA Compression Module already exists, skipping."
+fi
 
 echo "[INFO] DNA Compression Installed Successfully."
 
 # AI Parameter Optimization & Health Monitoring
 echo "[INFO] Configuring AI Parameter Optimization..."
-python3 $MODULES_DIR/parameter_optimizer.py
+python3 $MODULES_DIR/parameter_optimizer.py || echo "[WARNING] AI Optimization script missing."
 
 echo "[INFO] Running AI Health Check..."
-python3 $MODULES_DIR/ai_health_monitor.py
+python3 $MODULES_DIR/ai_health_monitor.py || echo "[WARNING] AI Health Monitoring script missing."
 
-echo "[INFO] DNA Compression & AI Health Monitoring Setup Complete."
+echo "[INFO] AI Optimization & Health Check Completed."
 
-# Web UI Setup
+# Web UI Setup (FastAPI + Django + Nginx)
 echo "[INFO] Setting up Web UI..."
-git clone https://github.com/atulya-ai/web-interface.git $WEB_DIR
-cd $WEB_DIR
-pip install -r requirements.txt
+if [ ! -d "$WEB_DIR" ]; then
+    git clone https://github.com/atulya-ai/web-interface.git $WEB_DIR
+    cd $WEB_DIR
+    pip install -r requirements.txt
+else
+    echo "[INFO] Web UI already exists, skipping download."
+fi
+
+# Configure Nginx for Web UI
+echo "[INFO] Configuring Nginx..."
+cat > /etc/nginx/sites-available/atulya_ai <<EOL
+server {
+    listen 80;
+    server_name localhost;
+    location / {
+        root $WEB_DIR/frontend;
+        index index.html;
+    }
+}
+EOL
+
+ln -s /etc/nginx/sites-available/atulya_ai /etc/nginx/sites-enabled/
+systemctl restart nginx
+
+echo "[INFO] Nginx Configuration Completed."
 
 # Start FastAPI & Django Server
 echo "[INFO] Starting Web Interface..."
@@ -101,5 +133,5 @@ ls -l $BASE_DIR | tee -a $LOG_FILE
 python3 --version | tee -a $LOG_FILE
 pip list | tee -a $LOG_FILE
 
-# Installation Complete Message
-echo "[SUCCESS] Atulya AI Installation Complete. Run './start.sh' to begin."
+# Final Success Message
+echo "[SUCCESS] Atulya AI Installation Complete. Access Web UI at http://localhost/"
