@@ -2,7 +2,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from huggingface_hub import login
 
 # Authenticate with Hugging Face
-login(token="your_huggingface_token")
+login(token="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")
 
 # Load DeepSeek-R1-Distill-Llama-70B
 print("Loading DeepSeek-R1-Distill-Llama-70B...")
