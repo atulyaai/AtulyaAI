@@ -10,6 +10,9 @@ set -e
 LOG_FILE="/var/log/atulyaai_install.log"
 exec > >(tee -a "$LOG_FILE") 2>&1
 
+# GitHub repository URL
+GITHUB_REPO="https://raw.githubusercontent.com/atulyaai/AtulyaAI/main"
+
 # Sub-Installers
 SUB_INSTALLERS=(
     "ai_core_installer.sh"
@@ -20,10 +23,16 @@ SUB_INSTALLERS=(
     "iot_control_installer.sh"
 )
 
-# Run Sub-Installers
+# Download and Run Sub-Installers
 for installer in "${SUB_INSTALLERS[@]}"; do
-    echo "Running $installer..."
+    echo "Downloading $installer..."
+    wget -O "$installer" "${GITHUB_REPO}/${installer}"
+
     if [ -f "./$installer" ]; then
+        echo "Making $installer executable..."
+        chmod +x "./$installer"
+
+        echo "Running $installer..."
         bash "./$installer"
     else
         echo "Error: $installer not found!"
