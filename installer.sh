@@ -3,33 +3,85 @@
 # Set project root directory
 PROJECT_DIR="$HOME/AtulyaAI"
 
-# Create AtulyaAI directory
-echo "📁 Creating AtulyaAI project directory at $PROJECT_DIR..."
-mkdir -p "$PROJECT_DIR"
+# Colors for terminal output
+GREEN="\033[92m"
+RED="\033[91m"
+RESET="\033[0m"
 
-# Navigate to project directory
-cd "$PROJECT_DIR" || exit
+# Function to run commands with error handling
+run_command() {
+    local command="$1"
+    local description="$2"
+    echo -e "${GREEN}Running: ${description}...${RESET}"
+    if eval "$command"; then
+        echo -e "${GREEN}Success: ${description}${RESET}\n"
+    else
+        echo -e "${RED}Error: ${description} failed.${RESET}\n"
+        exit 1
+    fi
+}
 
-# Create required directories
-echo "📂 Setting up project structure..."
-mkdir -p install src/core/ai src/core/data src/core/utils src/web src/security src/monitoring tests/unit tests/integration configs scripts logs models datasets backups
+# Step 1: Install system dependencies
+install_system_dependencies() {
+    echo -e "${GREEN}📦 Installing system dependencies...${RESET}"
+    run_command "sudo apt update && sudo apt install -y python3 python3-pip python3-venv git wget curl build-essential" "Installing system dependencies"
+}
 
-# Create placeholder files
-echo "📜 Adding placeholder scripts and configs..."
-touch install/install_system.sh install/install_server.sh
-touch src/core/ai/model_loader.py src/core/ai/fine_tuning.py
-touch src/core/data/dataset_manager.py src/core/data/compression.py
-touch src/core/utils/logger.py src/core/utils/error_handling.py
-touch src/web/api.py src/web/admin_dashboard.py
-touch src/security/firewall.py src/security/malware_detector.py
-touch src/monitoring/health_monitor.py src/monitoring/log_manager.py
-touch tests/unit/test_sample.py tests/integration/test_sample.py
-touch configs/ai_config.yaml configs/paths.yaml
-touch scripts/backup_manager.py scripts/task_scheduler.py
-touch logs/.gitkeep models/.gitkeep datasets/.gitkeep backups/.gitkeep
+# Step 2: Set up Python virtual environment
+setup_virtualenv() {
+    echo -e "${GREEN}🐍 Setting up Python virtual environment...${RESET}"
+    run_command "python3 -m venv $PROJECT_DIR/atulya_env" "Creating virtual environment"
+    run_command "source $PROJECT_DIR/atulya_env/bin/activate && pip install --upgrade pip" "Upgrading pip"
+}
 
-# Create a README file
-cat <<EOL > README.md
+# Step 3: Install Python libraries
+install_python_libraries() {
+    echo -e "${GREEN}📚 Installing Python libraries...${RESET}"
+    local libraries=(
+        "torch>=2.2.1"
+        "transformers>=4.40.0"
+        "accelerate>=0.29.3"
+        "bitsandbytes>=0.43.0"
+        "pydantic>=2.5.0"
+        "fastapi>=0.109.0"
+    )
+    run_command "source $PROJECT_DIR/atulya_env/bin/activate && pip install ${libraries[*]}" "Installing Python libraries"
+}
+
+# Step 4: Configure environment variables
+configure_environment() {
+    echo -e "${GREEN}⚙️ Configuring environment variables...${RESET}"
+    cat <<EOL > "$PROJECT_DIR/.env"
+PYTHONUNBUFFERED=1
+TOKENIZERS_PARALLELISM=false
+TRANSFORMERS_CACHE=$PROJECT_DIR/models/cache
+EOL
+    echo -e "${GREEN}✅ Environment variables configured in .env file.${RESET}"
+}
+
+# Step 5: Create project structure
+create_project_structure() {
+    echo -e "${GREEN}📂 Creating project structure...${RESET}"
+    mkdir -p "$PROJECT_DIR/install" "$PROJECT_DIR/src/core/ai" "$PROJECT_DIR/src/core/data" "$PROJECT_DIR/src/core/utils" \
+             "$PROJECT_DIR/src/web" "$PROJECT_DIR/src/security" "$PROJECT_DIR/src/monitoring" \
+             "$PROJECT_DIR/tests/unit" "$PROJECT_DIR/tests/integration" "$PROJECT_DIR/configs" \
+             "$PROJECT_DIR/scripts" "$PROJECT_DIR/logs" "$PROJECT_DIR/models" "$PROJECT_DIR/datasets" "$PROJECT_DIR/backups"
+
+    # Create placeholder files
+    touch "$PROJECT_DIR/install/install_system.sh" "$PROJECT_DIR/install/setup_server.sh"
+    touch "$PROJECT_DIR/src/core/ai/model_loader.py" "$PROJECT_DIR/src/core/ai/fine_tuning.py"
+    touch "$PROJECT_DIR/src/core/data/dataset_manager.py" "$PROJECT_DIR/src/core/data/compression.py"
+    touch "$PROJECT_DIR/src/core/utils/logger.py" "$PROJECT_DIR/src/core/utils/error_handling.py"
+    touch "$PROJECT_DIR/src/web/api.py" "$PROJECT_DIR/src/web/admin_dashboard.py"
+    touch "$PROJECT_DIR/src/security/firewall.py" "$PROJECT_DIR/src/security/malware_detector.py"
+    touch "$PROJECT_DIR/src/monitoring/health_monitor.py" "$PROJECT_DIR/src/monitoring/log_manager.py"
+    touch "$PROJECT_DIR/tests/unit/test_sample.py" "$PROJECT_DIR/tests/integration/test_sample.py"
+    touch "$PROJECT_DIR/configs/ai_config.yaml" "$PROJECT_DIR/configs/paths.yaml"
+    touch "$PROJECT_DIR/scripts/backup_manager.py" "$PROJECT_DIR/scripts/task_scheduler.py"
+    touch "$PROJECT_DIR/logs/.gitkeep" "$PROJECT_DIR/models/.gitkeep" "$PROJECT_DIR/datasets/.gitkeep" "$PROJECT_DIR/backups/.gitkeep"
+
+    # Create README file
+    cat <<EOL > "$PROJECT_DIR/README.md"
 # 🚀 AtulyaAI
 
 AtulyaAI is an advanced AI system designed for automation, security, smart home integration, and AI-powered decision-making.
@@ -47,16 +99,38 @@ curl -o installer.sh https://raw.githubusercontent.com/atulyaai/AtulyaAI/main/in
 \`\`\`
 EOL
 
-# Initialize Git repository
-echo "🛠️ Initializing Git repository..."
-git init
-git add .
-git commit -m "Initial commit with project structure"
+    echo -e "${GREEN}✅ Project structure created.${RESET}"
+}
 
-# Run system and server installation scripts
-echo "🚀 Running installation scripts..."
-chmod +x install/install_system.sh install/install_server.sh
-./install/install_system.sh
-./install/install_server.sh
+# Step 6: Initialize Git repository
+initialize_git_repo() {
+    echo -e "${GREEN}🛠️ Initializing Git repository...${RESET}"
+    cd "$PROJECT_DIR" || exit
+    git init
+    git add .
+    git commit -m "Initial commit with project structure"
+    echo -e "${GREEN}✅ Git repository initialized.${RESET}"
+}
 
-echo "✅ Setup complete! Navigate to $PROJECT_DIR and push your code to GitHub."
+# Main function
+main() {
+    echo -e "${GREEN}🚀 Starting AtulyaAI installation...${RESET}"
+
+    # Create project directory
+    mkdir -p "$PROJECT_DIR"
+    cd "$PROJECT_DIR" || exit
+
+    # Run installation steps
+    install_system_dependencies
+    setup_virtualenv
+    install_python_libraries
+    configure_environment
+    create_project_structure
+    initialize_git_repo
+
+    echo -e "${GREEN}🎉 Installation complete! Navigate to $PROJECT_DIR and push your code to GitHub.${RESET}"
+    echo -e "${GREEN}Activate the virtual environment with: source $PROJECT_DIR/atulya_env/bin/activate${RESET}"
+}
+
+# Execute main function
+main
