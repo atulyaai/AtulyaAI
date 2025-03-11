@@ -16,8 +16,7 @@ mkdir -p install src/core/ai src/core/data src/core/utils src/web src/security s
 
 # Create placeholder files
 echo "📜 Adding placeholder scripts and configs..."
-
-touch install/install_system.sh install/setup_server.sh
+touch install/install_system.sh install/install_server.sh
 touch src/core/ai/model_loader.py src/core/ai/fine_tuning.py
 touch src/core/data/dataset_manager.py src/core/data/compression.py
 touch src/core/utils/logger.py src/core/utils/error_handling.py
@@ -53,5 +52,11 @@ echo "🛠️ Initializing Git repository..."
 git init
 git add .
 git commit -m "Initial commit with project structure"
+
+# Run system and server installation scripts
+echo "🚀 Running installation scripts..."
+chmod +x install/install_system.sh install/install_server.sh
+./install/install_system.sh
+./install/install_server.sh
 
 echo "✅ Setup complete! Navigate to $PROJECT_DIR and push your code to GitHub."
