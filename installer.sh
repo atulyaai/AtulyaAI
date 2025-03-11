@@ -8,6 +8,14 @@ GREEN="\033[92m"
 RED="\033[91m"
 RESET="\033[0m"
 
+# Function to check if the script is run with root privileges
+check_root() {
+    if [[ $EUID -ne 0 ]]; then
+        echo -e "${RED}⚠️  This script must be run as root. Try running with sudo.${RESET}"
+        exit 1
+    fi
+}
+
 # Function to run commands with error handling
 run_command() {
     local command="$1"
@@ -27,11 +35,13 @@ install_system_dependencies() {
     run_command "sudo apt update && sudo apt install -y python3 python3-pip python3-venv git wget curl build-essential" "Installing system dependencies"
 }
 
-# Step 2: Set up Python virtual environment
+# Step 2: Check and set up Python virtual environment
 setup_virtualenv() {
     echo -e "${GREEN}🐍 Setting up Python virtual environment...${RESET}"
-    run_command "python3 -m venv $PROJECT_DIR/atulya_env" "Creating virtual environment"
-    run_command "source $PROJECT_DIR/atulya_env/bin/activate && pip install --upgrade pip" "Upgrading pip"
+    if [ ! -d "$PROJECT_DIR/atulya_env" ]; then
+        run_command "python3 -m venv $PROJECT_DIR/atulya_env" "Creating virtual environment"
+    fi
+    echo -e "${GREEN}✅ Virtual environment is set up. Activate it using: source $PROJECT_DIR/atulya_env/bin/activate${RESET}"
 }
 
 # Step 3: Install Python libraries
@@ -45,7 +55,7 @@ install_python_libraries() {
         "pydantic>=2.5.0"
         "fastapi>=0.109.0"
     )
-    run_command "source $PROJECT_DIR/atulya_env/bin/activate && pip install ${libraries[*]}" "Installing Python libraries"
+    run_command "source $PROJECT_DIR/atulya_env/bin/activate && pip install --upgrade pip && pip install ${libraries[*]}" "Installing Python libraries"
 }
 
 # Step 4: Configure environment variables
@@ -106,15 +116,23 @@ EOL
 initialize_git_repo() {
     echo -e "${GREEN}🛠️ Initializing Git repository...${RESET}"
     cd "$PROJECT_DIR" || exit
-    git init
-    git add .
-    git commit -m "Initial commit with project structure"
-    echo -e "${GREEN}✅ Git repository initialized.${RESET}"
+
+    if [ -d "$PROJECT_DIR/.git" ]; then
+        echo -e "${GREEN}✅ Git repository already initialized.${RESET}"
+    else
+        git init
+        git add .
+        git commit -m "Initial commit with project structure"
+        echo -e "${GREEN}✅ Git repository initialized.${RESET}"
+    fi
 }
 
 # Main function
 main() {
     echo -e "${GREEN}🚀 Starting AtulyaAI installation...${RESET}"
+
+    # Ensure script is run with root privileges
+    check_root
 
     # Create project directory
     mkdir -p "$PROJECT_DIR"
