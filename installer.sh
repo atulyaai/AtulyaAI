@@ -86,5 +86,14 @@ if [ ! -d ".git" ]; then
     run_command "git init && git add . && git commit -m 'Initial commit with project structure'" "Initializing Git repository"
 fi
 
-echo -e "${GREEN}🎉 Installation complete! Navigate to $PROJECT_DIR and push your code to GitHub.${RESET}"
-echo -e "${GREEN}Activate the virtual environment with: source $PROJECT_DIR/atulya_env/bin/activate${RESET}"
+# Enable Auto-Activation of Virtual Environment on Login
+echo -e "${GREEN}🔄 Configuring auto-activation of virtual environment...${RESET}"
+if ! grep -q "source $PROJECT_DIR/atulya_env/bin/activate" ~/.profile; then
+    echo "source $PROJECT_DIR/atulya_env/bin/activate" >> ~/.profile
+    echo -e "${GREEN}✔ Auto-activation configured. Virtual environment will activate automatically on login.${RESET}"
+else
+    echo -e "${GREEN}✔ Auto-activation already set up.${RESET}"
+fi
+
+echo -e "${GREEN}🎉 Installation complete! The virtual environment will now activate automatically when you log in.${RESET}"
+echo -e "${GREEN}Activate it manually if needed: source $PROJECT_DIR/atulya_env/bin/activate${RESET}"
