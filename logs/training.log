@@ -1,0 +1,71 @@
+2025-06-21 16:16:59,234 [INFO] Batch 0: logits shape torch.Size([32, 304, 10000]), y shape torch.Size([32, 304])
+2025-06-21 16:17:02,428 [INFO] Batch 0: Loss 9.1577
+2025-06-21 16:17:06,978 [INFO] Batch 1: logits shape torch.Size([32, 263, 10000]), y shape torch.Size([32, 263])
+2025-06-21 16:17:09,492 [INFO] Batch 1: Loss 7.3050
+2025-06-21 16:17:16,815 [INFO] Batch 2: logits shape torch.Size([32, 491, 10000]), y shape torch.Size([32, 491])
+2025-06-21 16:17:23,253 [INFO] Batch 2: Loss 6.7256
+2025-06-21 16:17:29,607 [INFO] Batch 3: logits shape torch.Size([32, 414, 10000]), y shape torch.Size([32, 414])
+2025-06-21 16:17:34,027 [INFO] Batch 3: Loss 6.3266
+2025-06-21 16:17:34,171 [ERROR] Error in batch 4: index out of range in self
+2025-06-21 16:17:34,241 [ERROR] Error in batch 5: index out of range in self
+2025-06-21 16:17:39,741 [INFO] Batch 6: logits shape torch.Size([32, 327, 10000]), y shape torch.Size([32, 327])
+2025-06-21 16:17:43,124 [INFO] Batch 6: Loss 5.9996
+2025-06-21 16:17:51,568 [INFO] Batch 7: logits shape torch.Size([32, 502, 10000]), y shape torch.Size([32, 502])
+2025-06-21 16:17:57,834 [INFO] Batch 7: Loss 5.6237
+2025-06-21 16:18:04,271 [INFO] Batch 8: logits shape torch.Size([32, 371, 10000]), y shape torch.Size([32, 371])
+2025-06-21 16:18:08,057 [INFO] Batch 8: Loss 5.2401
+2025-06-21 16:18:08,165 [ERROR] Error in batch 9: index out of range in self
+2025-06-21 16:18:14,849 [INFO] Batch 10: logits shape torch.Size([32, 445, 10000]), y shape torch.Size([32, 445])
+2025-06-21 16:18:20,110 [INFO] Batch 10: Loss 5.0982
+2025-06-21 16:18:24,340 [INFO] Batch 11: logits shape torch.Size([32, 245, 10000]), y shape torch.Size([32, 245])
+2025-06-21 16:18:26,479 [INFO] Batch 11: Loss 4.5978
+2025-06-21 16:18:26,894 [ERROR] Error in batch 12: index out of range in self
+2025-06-21 16:18:27,029 [ERROR] Error in batch 13: index out of range in self
+2025-06-21 16:18:32,550 [INFO] Batch 14: logits shape torch.Size([32, 285, 10000]), y shape torch.Size([32, 285])
+2025-06-21 16:18:35,064 [INFO] Batch 14: Loss 4.2925
+2025-06-21 16:18:35,204 [ERROR] Error in batch 15: index out of range in self
+2025-06-21 16:18:35,408 [ERROR] Error in batch 16: index out of range in self
+2025-06-21 16:18:42,031 [INFO] Batch 17: logits shape torch.Size([32, 504, 10000]), y shape torch.Size([32, 504])
+2025-06-21 16:18:47,154 [INFO] Batch 17: Loss 4.0717
+2025-06-21 16:18:53,315 [INFO] Batch 18: logits shape torch.Size([32, 448, 10000]), y shape torch.Size([32, 448])
+2025-06-21 16:18:57,918 [INFO] Batch 18: Loss 3.8561
+2025-06-21 16:19:04,357 [INFO] Batch 19: logits shape torch.Size([32, 431, 10000]), y shape torch.Size([32, 431])
+2025-06-21 16:19:09,382 [INFO] Batch 19: Loss 3.6404
+2025-06-21 16:19:09,518 [ERROR] Error in batch 20: index out of range in self
+2025-06-21 16:19:15,272 [INFO] Batch 21: logits shape torch.Size([32, 354, 10000]), y shape torch.Size([32, 354])
+2025-06-21 16:19:18,649 [INFO] Batch 21: Loss 3.4624
+2025-06-21 16:19:26,473 [INFO] Batch 22: logits shape torch.Size([32, 520, 10000]), y shape torch.Size([32, 520])
+2025-06-21 16:19:34,113 [INFO] Batch 22: Loss 3.3938
+2025-06-21 16:19:40,517 [INFO] Batch 23: logits shape torch.Size([32, 383, 10000]), y shape torch.Size([32, 383])
+2025-06-21 16:19:44,619 [INFO] Batch 23: Loss 3.3256
+2025-06-21 16:19:44,901 [ERROR] Error in batch 24: index out of range in self
+2025-06-21 16:19:55,241 [INFO] Batch 25: logits shape torch.Size([32, 699, 10000]), y shape torch.Size([32, 699])
+2025-06-21 16:20:03,299 [INFO] Batch 25: Loss 3.2762
+2025-06-21 16:20:09,453 [INFO] Batch 26: logits shape torch.Size([32, 417, 10000]), y shape torch.Size([32, 417])
+2025-06-21 16:20:14,074 [INFO] Batch 26: Loss 3.1684
+2025-06-21 16:20:25,119 [INFO] Batch 27: logits shape torch.Size([32, 698, 10000]), y shape torch.Size([32, 698])
+2025-06-21 16:20:35,165 [INFO] Batch 27: Loss 3.2485
+2025-06-21 16:20:43,234 [INFO] Batch 28: logits shape torch.Size([32, 563, 10000]), y shape torch.Size([32, 563])
+2025-06-21 16:20:49,554 [INFO] Batch 28: Loss 3.3481
+2025-06-21 16:20:54,909 [INFO] Batch 29: logits shape torch.Size([32, 335, 10000]), y shape torch.Size([32, 335])
+2025-06-21 16:20:58,338 [INFO] Batch 29: Loss 3.1714
+2025-06-21 16:21:07,055 [INFO] Batch 30: logits shape torch.Size([32, 524, 10000]), y shape torch.Size([32, 524])
+2025-06-21 16:21:14,725 [INFO] Batch 30: Loss 3.4539
+2025-06-21 16:21:30,227 [INFO] Batch 31: logits shape torch.Size([32, 981, 10000]), y shape torch.Size([32, 981])
+2025-06-21 16:21:48,401 [INFO] Batch 31: Loss 3.2146
+2025-06-21 16:21:54,498 [INFO] Batch 32: logits shape torch.Size([32, 381, 10000]), y shape torch.Size([32, 381])
+2025-06-21 16:21:58,510 [INFO] Batch 32: Loss 3.1620
+2025-06-21 16:22:03,617 [INFO] Batch 33: logits shape torch.Size([32, 271, 10000]), y shape torch.Size([32, 271])
+2025-06-21 16:22:06,586 [INFO] Batch 33: Loss 3.0351
+2025-06-21 16:22:11,948 [INFO] Batch 34: logits shape torch.Size([32, 334, 10000]), y shape torch.Size([32, 334])
+2025-06-21 16:22:15,426 [INFO] Batch 34: Loss 3.1058
+2025-06-21 16:22:15,548 [ERROR] Error in batch 35: index out of range in self
+2025-06-21 16:22:15,639 [ERROR] Error in batch 36: index out of range in self
+2025-06-21 16:22:22,905 [INFO] Batch 37: logits shape torch.Size([32, 462, 10000]), y shape torch.Size([32, 462])
+2025-06-21 16:22:28,527 [INFO] Batch 37: Loss 3.1266
+2025-06-21 16:22:33,832 [INFO] Batch 38: logits shape torch.Size([32, 321, 10000]), y shape torch.Size([32, 321])
+2025-06-21 16:22:37,553 [INFO] Batch 38: Loss 3.1428
+2025-06-21 16:22:45,062 [INFO] Batch 39: logits shape torch.Size([32, 377, 10000]), y shape torch.Size([32, 377])
+2025-06-21 16:22:49,783 [INFO] Batch 39: Loss 3.1125
+2025-06-21 16:22:49,887 [ERROR] Error in batch 40: index out of range in self
+2025-06-21 16:22:56,789 [INFO] Batch 41: logits shape torch.Size([32, 415, 10000]), y shape torch.Size([32, 415])

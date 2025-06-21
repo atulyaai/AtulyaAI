@@ -1,0 +1,13 @@
+{
+  "parameter_stats": {
+    "total_parameters": 130998928,
+    "trainable_parameters": 130998928,
+    "model_size_mb": 499.72125244140625,
+    "text_model_params": 130880144,
+    "audio_model_params": 31616,
+    "video_model_params": 87168,
+    "vocab_size": 7470
+  },
+  "model_type": "MultimodalModel",
+  "save_timestamp": "None"
+}
