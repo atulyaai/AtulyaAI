@@ -1,4 +1,84 @@
-# Atulya AI - Multimodal Artificial Intelligence System
+# 🤖 AtulyaAI Installer
+
+---
+
+🚀 **About AtulyaAI**
+
+AtulyaAI is an advanced, modular AI system for automation, security, smart home integration, and AI-powered decision-making. This installer provides a one-click setup for Windows, Ubuntu 22.04 & 24.04, and more.
+
+---
+
+## 📜 Features
+
+✅ **Automated Installation** – Sets up AtulyaAI with all dependencies in one go.  
+✅ **Self-Updating** – Updates every 8 hours to stay optimized and secure.  
+✅ **Modular & Expandable** – Easily add new AI models and features.  
+✅ **Web-Based Management** – Manage everything from a modern UI, no SSH needed.  
+✅ **Multi-Modal AI** – Text, audio, and video intelligence in one system.  
+✅ **Self-Repair & Monitoring** – Automated diagnostics and self-healing.
+
+---
+
+## 🛠️ Installation
+
+### 1️⃣ One-Click Install (Recommended)
+Run this command in your terminal (Linux):
+
+```sh
+curl -o installer.sh https://raw.githubusercontent.com/atulyaai/AtulyaAI/main/installer.sh && chmod +x installer.sh && sudo ./installer.sh
+```
+
+### 2️⃣ Manual Installation
+
+```sh
+git clone https://github.com/atulyaai/AtulyaAI.git /opt/atulyaai
+cd /opt/atulyaai
+pip3 install -r requirements.txt
+python3 server.py
+```
+
+---
+
+## 📂 Directory Structure
+
+```
+AtulyaAI/
+├── configs/          # Configuration files
+├── install/          # Installation scripts
+├── models/           # AI models
+├── src/              # Core AI source code
+├── scripts/          # Utility scripts
+├── logs/             # Logs & debug info
+├── README.md         # This document
+└── installer.sh      # Auto-installation script
+```
+
+---
+
+## 🌎 Stay Updated
+
+AtulyaAI updates every 8 hours automatically. To manually update:
+
+```sh
+cd /opt/atulyaai
+git pull origin main
+```
+
+---
+
+## 🛠️ Troubleshooting & Support
+
+If you face any issues, run:
+
+```sh
+docker logs atulyaai --tail 100
+```
+
+Or open an issue on [GitHub](https://github.com/atulyaai/AtulyaAI).
+
+---
+
+# 🤖 Atulya AI - Multimodal Artificial Intelligence System
 
 ## Overview
 
