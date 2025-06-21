@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './App.css';
 import ChatInterface from './ChatInterface';
@@ -66,6 +66,79 @@ function MetricsChart() {
 
 function App() {
   const [currentView, setCurrentView] = useState('chat'); // 'chat' or 'admin'
+  const [messages, setMessages] = useState([]);
+  const [inputText, setInputText] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [modelStatus, setModelStatus] = useState('Loading...');
+  const [uploadedFiles, setUploadedFiles] = useState({ audio: null, video: null });
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+    checkModelStatus();
+  }, [messages]);
+
+  const checkModelStatus = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/status');
+      setModelStatus(response.data.status);
+    } catch (error) {
+      setModelStatus('Offline');
+    }
+  };
+
+  const handleFileUpload = (type, file) => {
+    setUploadedFiles(prev => ({ ...prev, [type]: file }));
+  };
+
+  const sendMessage = async () => {
+    if (!inputText.trim()) return;
+
+    const userMessage = { text: inputText, sender: 'user', timestamp: new Date() };
+    setMessages(prev => [...prev, userMessage]);
+    setInputText('');
+    setIsLoading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('text', inputText);
+      if (uploadedFiles.audio) formData.append('audio', uploadedFiles.audio);
+      if (uploadedFiles.video) formData.append('video', uploadedFiles.video);
+
+      const response = await axios.post('http://localhost:5000/api/chat', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      const aiMessage = { 
+        text: response.data.response, 
+        sender: 'ai', 
+        timestamp: new Date(),
+        confidence: response.data.confidence
+      };
+      setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      const errorMessage = { 
+        text: 'Sorry, I encountered an error. Please try again.', 
+        sender: 'ai', 
+        timestamp: new Date(),
+        isError: true
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
 
   return (
     <div className="App">
@@ -97,7 +170,110 @@ function App() {
       {/* Main Content */}
       <main className="flex-1">
         {currentView === 'chat' ? (
-          <ChatInterface />
+          <div className="app">
+            {/* Header */}
+            <header className="header">
+              <div className="header-content">
+                <h1>🤖 AtulyaAI</h1>
+                <div className="status-indicator">
+                  <span className={`status-dot ${modelStatus === 'Online' ? 'online' : 'offline'}`}></span>
+                  <span className="status-text">{modelStatus}</span>
+                </div>
+              </div>
+            </header>
+
+            {/* Main Chat Area */}
+            <div className="chat-container">
+              <div className="messages">
+                {messages.length === 0 && (
+                  <div className="welcome-message">
+                    <h2>Welcome to AtulyaAI! 🚀</h2>
+                    <p>I'm your multimodal AI assistant. I can process text, audio, and video inputs.</p>
+                    <p>Try asking me something or upload a file!</p>
+                  </div>
+                )}
+                
+                {messages.map((message, index) => (
+                  <div key={index} className={`message ${message.sender} ${message.isError ? 'error' : ''}`}>
+                    <div className="message-content">
+                      <div className="message-text">{message.text}</div>
+                      {message.confidence && (
+                        <div className="confidence">Confidence: {Math.round(message.confidence * 100)}%</div>
+                      )}
+                      <div className="timestamp">
+                        {message.timestamp.toLocaleTimeString()}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {isLoading && (
+                  <div className="message ai">
+                    <div className="message-content">
+                      <div className="typing-indicator">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* File Upload Area */}
+              <div className="file-upload-area">
+                <div className="upload-section">
+                  <label className="upload-label">
+                    🎵 Audio File
+                    <input
+                      type="file"
+                      accept="audio/*"
+                      onChange={(e) => handleFileUpload('audio', e.target.files[0])}
+                      className="file-input"
+                    />
+                  </label>
+                  {uploadedFiles.audio && (
+                    <span className="file-name">{uploadedFiles.audio.name}</span>
+                  )}
+                </div>
+                
+                <div className="upload-section">
+                  <label className="upload-label">
+                    🎬 Video File
+                    <input
+                      type="file"
+                      accept="video/*"
+                      onChange={(e) => handleFileUpload('video', e.target.files[0])}
+                      className="file-input"
+                    />
+                  </label>
+                  {uploadedFiles.video && (
+                    <span className="file-name">{uploadedFiles.video.name}</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Input Area */}
+              <div className="input-area">
+                <textarea
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Type your message here... (Press Enter to send)"
+                  className="message-input"
+                  rows="3"
+                />
+                <button 
+                  onClick={sendMessage} 
+                  disabled={isLoading || !inputText.trim()}
+                  className="send-button"
+                >
+                  {isLoading ? '⏳' : '🚀'}
+                </button>
+              </div>
+            </div>
+          </div>
         ) : (
           <AdminPanel />
         )}
